@@ -176,13 +176,27 @@ jobs:
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
+          # Extract version from CMakeLists.txt
+          $version = Select-String -Path "CMakeLists.txt" -Pattern 'project\(".*" VERSION ([0-9.]+)\)' | ForEach-Object { $_.Matches.Groups[1].Value }
+          Write-Host "Plugin version: $version"
+
           # OBS v32 plugin structure: plugin-name/bin/64bit/ and plugin-name/data/
           mkdir -p package/obs_scene_tree_view/bin/64bit
           mkdir -p package/obs_scene_tree_view/data
           copy build_x64\RelWithDebInfo\obs_scene_tree_view.dll package\obs_scene_tree_view\bin\64bit\
           xcopy data\locale package\obs_scene_tree_view\data\locale\ /E /I
+
+          # Create release package with version
           cd package
-          7z a ..\obs_scene_tree_view-${{ matrix.name }}.zip obs_scene_tree_view
+          7z a "..\obs_scene_tree_view-v$version-windows-x64.zip" obs_scene_tree_view
+
+          # Clean up downloaded dependencies to keep artifacts small
+          cd ..
+          Remove-Item deps.zip -ErrorAction SilentlyContinue
+          Remove-Item qt-deps.zip -ErrorAction SilentlyContinue
+          Remove-Item -Recurse obs-deps -ErrorAction SilentlyContinue
+          Remove-Item -Recurse obs-src -ErrorAction SilentlyContinue
+          Remove-Item -Recurse obs-build -ErrorAction SilentlyContinue
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
@@ -207,10 +221,8 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}-RelWithDebInfo
-          path: |
-            *.zip
-            *.tar.gz
+          name: obs_scene_tree_view-${{ matrix.name }}
+          path: obs_scene_tree_view-v*.zip
 
   release:
     name: Release
