@@ -108,14 +108,12 @@ jobs:
               $_.Matches.Groups[1].Value
           }
 
-          $obsDefContent = @"
-LIBRARY obs
-EXPORTS
-"@
+          # Create obs.def file
+          $obsDefContent = "LIBRARY obs`nEXPORTS`n"
           foreach ($export in $obsExports) {
-              $obsDefContent += "`n    $export"
+              $obsDefContent += "    $export`n"
           }
-          Set-Content -Path "obs.def" -Value $obsDefContent -Encoding ASCII
+          Set-Content -Path "obs.def" -Value $obsDefContent -Encoding ASCII -NoNewline
 
           Write-Host "Created obs.def with $($obsExports.Count) exports"
 
@@ -124,14 +122,12 @@ EXPORTS
               $_.Matches.Groups[1].Value
           }
 
-          $frontendDefContent = @"
-LIBRARY obs-frontend-api
-EXPORTS
-"@
+          # Create obs-frontend-api.def file
+          $frontendDefContent = "LIBRARY obs-frontend-api`nEXPORTS`n"
           foreach ($export in $frontendExports) {
-              $frontendDefContent += "`n    $export"
+              $frontendDefContent += "    $export`n"
           }
-          Set-Content -Path "obs-frontend-api.def" -Value $frontendDefContent -Encoding ASCII
+          Set-Content -Path "obs-frontend-api.def" -Value $frontendDefContent -Encoding ASCII -NoNewline
 
           Write-Host "Created obs-frontend-api.def with $($frontendExports.Count) exports"
 
