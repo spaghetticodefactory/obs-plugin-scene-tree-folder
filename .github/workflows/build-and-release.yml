@@ -73,6 +73,12 @@ jobs:
           # These are minimal .lib files that allow linking but defer symbol resolution to runtime
           Write-Host "Creating stub import libraries for delay-loading..."
 
+          # Find Visual Studio installation
+          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $libExe = Join-Path $vsPath "VC\Tools\MSVC\*\bin\Hostx64\x64\lib.exe" | Get-Item | Select-Object -First 1
+
+          Write-Host "Using lib.exe at: $libExe"
+
           # Create minimal .def files
           @"
           LIBRARY obs
@@ -85,8 +91,8 @@ jobs:
           "@ | Out-File -FilePath "obs-frontend-api.def" -Encoding ASCII
 
           # Create empty .lib files using lib.exe
-          lib /DEF:obs.def /OUT:"obs-build/lib/obs.lib" /MACHINE:X64
-          lib /DEF:obs-frontend-api.def /OUT:"obs-build/lib/obs-frontend-api.lib" /MACHINE:X64
+          & $libExe /DEF:obs.def /OUT:"obs-build/lib/obs.lib" /MACHINE:X64
+          & $libExe /DEF:obs-frontend-api.def /OUT:"obs-build/lib/obs-frontend-api.lib" /MACHINE:X64
 
           # Generate obsconfig.h from template
           $obsconfigContent = @"
