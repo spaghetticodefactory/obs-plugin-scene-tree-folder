@@ -14,6 +14,11 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
+	// Make folder names bold
+	QFont font = this->font();
+	font.setBold(true);
+	this->setFont(font);
+
 	QMainWindow *main_window = reinterpret_cast<QMainWindow*>(obs_frontend_get_main_window());
 	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
 	QIcon icon = config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons") ?
