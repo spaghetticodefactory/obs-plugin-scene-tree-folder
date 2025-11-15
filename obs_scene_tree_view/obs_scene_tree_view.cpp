@@ -4,6 +4,7 @@
 
 #include <QLineEdit>
 #include <QAction>
+#include <QCloseEvent>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
@@ -68,7 +69,6 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	assert(this->_remove_scene_act);
 
 	this->_stv_dock.setupUi(this);
-	this->hide();
 
 	this->_stv_dock.stvTree->SetItemModel(&this->_scene_tree_items);
 	this->_stv_dock.stvTree->setDefaultDropAction(Qt::DropAction::MoveAction);
@@ -97,6 +97,13 @@ ObsSceneTreeView::~ObsSceneTreeView()
 	// Remove frontend cb
 	obs_frontend_remove_save_callback(&ObsSceneTreeView::obs_frontend_save_cb, this);
 	obs_frontend_remove_event_callback(&ObsSceneTreeView::obs_frontend_event_cb, this);
+}
+
+void ObsSceneTreeView::closeEvent(QCloseEvent *event)
+{
+	// Hide the dock instead of closing it so it can be shown again from View menu
+	event->ignore();
+	hide();
 }
 
 void ObsSceneTreeView::SaveSceneTree(const char *scene_collection)
