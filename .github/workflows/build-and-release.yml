@@ -72,13 +72,13 @@ jobs:
           # Create a simple config file for CMake to find libobs
           $configContent = @"
           # Dummy libobs config
-          set(OBS_INCLUDE_DIRS "`${CMAKE_CURRENT_LIST_DIR}/../include")
+          set(OBS_INCLUDE_DIRS "`${CMAKE_CURRENT_LIST_DIR}/../include/libobs")
           set(OBS_LIBRARIES "")
 
           if(NOT TARGET OBS::libobs)
             add_library(OBS::libobs INTERFACE IMPORTED)
             set_target_properties(OBS::libobs PROPERTIES
-              INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include"
+              INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include/libobs"
             )
           endif()
 
