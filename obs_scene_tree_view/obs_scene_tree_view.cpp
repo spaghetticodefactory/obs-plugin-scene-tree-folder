@@ -39,7 +39,8 @@ bool obs_module_load()
 
 	QMainWindow *main_window = reinterpret_cast<QMainWindow*>(obs_frontend_get_main_window());
 	obs_frontend_push_ui_translation(obs_module_get_string);
-	obs_frontend_add_dock(new ObsSceneTreeView(main_window));
+	// OBS v32: obs_frontend_add_dock replaced with obs_frontend_add_dock_by_id
+	obs_frontend_add_dock_by_id("SceneTreeView", obs_module_text("SceneTreeView.Title"), new ObsSceneTreeView(main_window));
 	obs_frontend_pop_ui_translation();
 
 	return true;

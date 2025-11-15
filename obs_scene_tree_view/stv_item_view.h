@@ -16,11 +16,13 @@ class StvItemView
 
 		void SetItemModel(StvItemModel *model);
 
+	public slots:
+		// Qt6: Changed from protected to public to allow modern signal/slot connections
+		void EditSelectedItem();
+
 	protected slots:
 		void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
 		//bool edit(const QModelIndex &index, EditTrigger trigger, QEvent *event) override;
-
-		void EditSelectedItem();
 
 		void mouseDoubleClickEvent(QMouseEvent *event) override;
 
