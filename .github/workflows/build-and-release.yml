@@ -57,15 +57,6 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-qt6-2025-08-23-x64.zip" -OutFile "qt-deps.zip"
           Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps" -Force
 
-          # Download OBS Windows release to get .lib files
-          Write-Host "Downloading OBS Windows release for import libraries..."
-          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-studio/releases/download/$obsVersion/OBS-Studio-$obsVersion-Windows-x64.zip" -OutFile "obs-studio.zip"
-          Expand-Archive -Path "obs-studio.zip" -DestinationPath "obs-studio" -Force
-
-          # Debug: Show OBS Studio directory structure
-          Write-Host "OBS Studio directory structure:"
-          Get-ChildItem -Path "obs-studio" -Recurse -Depth 2 | Where-Object { $_.Name -like "*.lib" } | Select-Object FullName
-
           # Clone OBS for headers (shallow)
           git clone --depth 1 --branch $obsVersion https://github.com/obsproject/obs-studio.git obs-src
 
@@ -73,16 +64,29 @@ jobs:
           New-Item -ItemType Directory -Force -Path "obs-build/cmake"
           New-Item -ItemType Directory -Force -Path "obs-build/include"
           New-Item -ItemType Directory -Force -Path "obs-build/lib"
-          New-Item -ItemType Directory -Force -Path "obs-build/bin/64bit"
 
           # Copy headers
           Copy-Item -Recurse "obs-src/libobs" "obs-build/include/"
           Copy-Item -Recurse "obs-src/frontend/api" "obs-build/include/obs-frontend-api"
 
-          # Copy .lib files from OBS Studio release
-          Write-Host "Copying OBS library files..."
-          Copy-Item "obs-studio/bin/64bit/obs.lib" "obs-build/lib/" -ErrorAction Stop
-          Copy-Item "obs-studio/bin/64bit/obs-frontend-api.lib" "obs-build/lib/" -ErrorAction Stop
+          # Create stub import libraries for delay-loading
+          # These are minimal .lib files that allow linking but defer symbol resolution to runtime
+          Write-Host "Creating stub import libraries for delay-loading..."
+
+          # Create minimal .def files
+          @"
+          LIBRARY obs
+          EXPORTS
+          "@  | Out-File -FilePath "obs.def" -Encoding ASCII
+
+          @"
+          LIBRARY obs-frontend-api
+          EXPORTS
+          "@ | Out-File -FilePath "obs-frontend-api.def" -Encoding ASCII
+
+          # Create empty .lib files using lib.exe
+          lib /DEF:obs.def /OUT:"obs-build/lib/obs.lib" /MACHINE:X64
+          lib /DEF:obs-frontend-api.def /OUT:"obs-build/lib/obs-frontend-api.lib" /MACHINE:X64
 
           # Generate obsconfig.h from template
           $obsconfigContent = @"
@@ -215,10 +219,8 @@ jobs:
           cd ..
           Remove-Item deps.zip -ErrorAction SilentlyContinue
           Remove-Item qt-deps.zip -ErrorAction SilentlyContinue
-          Remove-Item obs-studio.zip -ErrorAction SilentlyContinue
           Remove-Item -Recurse obs-deps -ErrorAction SilentlyContinue
           Remove-Item -Recurse obs-src -ErrorAction SilentlyContinue
-          Remove-Item -Recurse obs-studio -ErrorAction SilentlyContinue
           Remove-Item -Recurse obs-build -ErrorAction SilentlyContinue
 
       - name: Package (macOS)

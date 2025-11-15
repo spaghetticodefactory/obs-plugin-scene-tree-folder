@@ -92,6 +92,17 @@ target_link_libraries(${LIBRARY_NAME}
 		PRIVATE
 )
 
+# Windows: Use delay-loading for OBS DLLs (proper plugin approach)
+if(WIN32 AND NOT BUILD_IN_OBS)
+	# Link delay-load helper library
+	target_link_libraries(${LIBRARY_NAME} PRIVATE delayimp)
+	# Delay-load OBS DLLs - symbols resolved when plugin loads in OBS
+	target_link_options(${LIBRARY_NAME} PRIVATE
+		/DELAYLOAD:obs.dll
+		/DELAYLOAD:obs-frontend-api.dll
+	)
+endif()
+
 
 ##########################################
 ## Install files
