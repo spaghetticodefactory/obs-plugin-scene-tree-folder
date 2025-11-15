@@ -48,6 +48,9 @@ StvSceneItem::StvSceneItem(const QString &text, obs_weak_source_t *weak)
 	            main_window->property("sceneIcon").value<QIcon>() :
 	            QIcon();
 	this->setIcon(icon);
+
+	// Note: Color inheritance is applied when the item is added to a parent
+	// See UpdateChildColors() which is called after adding items to folders
 }
 
 int StvSceneItem::type() const
@@ -231,6 +234,9 @@ void StvItemModel::UpdateTree(obs_frontend_source_list &scene_list, const QModel
 	}
 
 	this->_scenes_in_tree = std::move(new_scene_tree);
+
+	// Update colors for all folders and their children
+	UpdateChildColors(this->invisibleRootItem());
 }
 
 bool StvItemModel::CheckFolderNameUniqueness(const QString &name, QStandardItem *parent, QStandardItem *item_to_skip)
@@ -383,6 +389,57 @@ void StvItemModel::SetFolderIconVisibility(bool enable_visibility)
 	QIcon icon = enable_visibility ? main_window->property("groupIcon").value<QIcon>() : QIcon();
 
 	return this->SetIcon(icon, FOLDER, this->invisibleRootItem());
+}
+
+void StvItemModel::SetFolderColor(QStandardItem *folder_item, const QColor &color)
+{
+	if (!folder_item || folder_item->type() != FOLDER)
+		return;
+
+	// Store the color
+	folder_item->setData(color, FOLDER_COLOR);
+
+	// Apply color to folder
+	if (color.isValid())
+		folder_item->setForeground(QBrush(color));
+	else
+		folder_item->setForeground(QColor("#a0a0a0")); // Default light gray
+
+	// Update all child scenes to inherit this color
+	UpdateChildColors(folder_item);
+}
+
+void StvItemModel::UpdateChildColors(QStandardItem *parent_item)
+{
+	if (!parent_item)
+		return;
+
+	QColor folderColor;
+	if (parent_item->type() == FOLDER)
+	{
+		QVariant colorData = parent_item->data(FOLDER_COLOR);
+		if (colorData.isValid())
+			folderColor = colorData.value<QColor>();
+		else
+			folderColor = QColor("#a0a0a0"); // Default folder color
+	}
+
+	// Apply color to all children
+	for (int i = 0; i < parent_item->rowCount(); ++i)
+	{
+		QStandardItem *child = parent_item->child(i);
+		if (child->type() == SCENE)
+		{
+			// Scenes inherit parent folder color
+			if (folderColor.isValid())
+				child->setForeground(QBrush(folderColor));
+		}
+		else if (child->type() == FOLDER)
+		{
+			// Recursively update nested folders
+			UpdateChildColors(child);
+		}
+	}
 }
 
 void StvItemModel::UpdateSceneSize()

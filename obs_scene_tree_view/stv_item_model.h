@@ -55,7 +55,7 @@ class StvItemModel
 
 	public:
 		enum QDATA_ROLE
-		{	OBS_SCENE = Qt::UserRole	};
+		{	OBS_SCENE = Qt::UserRole, FOLDER_COLOR	};
 
 		enum QITEM_TYPE
 		{	FOLDER = QStandardItem::UserType+1, SCENE	};
@@ -86,6 +86,9 @@ class StvItemModel
 		void SetIconVisibility(bool enable_visibility, QITEM_TYPE item_type);
 		void SetSceneIconVisibility(bool enable_visibility);
 		void SetFolderIconVisibility(bool enable_visibility);
+
+		void SetFolderColor(QStandardItem *folder_item, const QColor &color);
+		void UpdateChildColors(QStandardItem *parent_item);
 
 		void UpdateSceneSize();
 		bool IsManagedScene(obs_scene_t *scene) const;

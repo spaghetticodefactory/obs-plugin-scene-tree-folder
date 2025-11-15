@@ -4,6 +4,7 @@
 
 #include <QLineEdit>
 #include <QAction>
+#include <QColorDialog>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
@@ -343,6 +344,35 @@ void ObsSceneTreeView::on_stvTree_customContextMenuRequested(const QPoint &pos)
 		};
 
 		connect(toggleIconAction, &QAction::triggered, toggleIcon);
+
+		// Add "Set Color" option for folders
+		if (item->type() == StvItemModel::FOLDER)
+		{
+			QAction *setColorAction = popup.addAction("Set Color");
+			connect(setColorAction, &QAction::triggered, [this, item]() {
+				QColor currentColor = item->data(StvItemModel::FOLDER_COLOR).value<QColor>();
+				if (!currentColor.isValid())
+					currentColor = QColor("#a0a0a0");
+
+				QColor newColor = QColorDialog::getColor(currentColor, this, "Select Folder Color");
+				if (newColor.isValid())
+				{
+					this->_scene_tree_items.SetFolderColor(item, newColor);
+					this->SaveSceneTree(this->_scene_collection_name);
+				}
+			});
+
+			// Add "Remove Color" option
+			QVariant colorData = item->data(StvItemModel::FOLDER_COLOR);
+			if (colorData.isValid() && colorData.value<QColor>().isValid())
+			{
+				QAction *removeColorAction = popup.addAction("Remove Color");
+				connect(removeColorAction, &QAction::triggered, [this, item]() {
+					this->_scene_tree_items.SetFolderColor(item, QColor());
+					this->SaveSceneTree(this->_scene_collection_name);
+				});
+			}
+		}
 	}
 
 //	popup.addSeparator();
