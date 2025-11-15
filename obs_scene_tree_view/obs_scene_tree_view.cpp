@@ -74,7 +74,7 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 
 	// Configure dock widget features
 	setObjectName("SceneTreeView");
-	setFeatures(QDockWidget::AllDockWidgetFeatures);
+	setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	setAllowedAreas(Qt::AllDockWidgetAreas);
 
 	this->_stv_dock.stvTree->SetItemModel(&this->_scene_tree_items);
