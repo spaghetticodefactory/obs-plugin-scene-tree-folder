@@ -57,6 +57,11 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-qt6-2025-08-23-x64.zip" -OutFile "qt-deps.zip"
           Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps" -Force
 
+          # Download OBS Windows release to extract DLL exports
+          Write-Host "Downloading OBS Windows release to extract symbols..."
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-studio/releases/download/$obsVersion/OBS-Studio-$obsVersion-Windows-x64.zip" -OutFile "obs-studio.zip"
+          Expand-Archive -Path "obs-studio.zip" -DestinationPath "obs-studio" -Force
+
           # Clone OBS for headers (shallow)
           git clone --depth 1 --branch $obsVersion https://github.com/obsproject/obs-studio.git obs-src
 
@@ -69,30 +74,73 @@ jobs:
           Copy-Item -Recurse "obs-src/libobs" "obs-build/include/"
           Copy-Item -Recurse "obs-src/frontend/api" "obs-build/include/obs-frontend-api"
 
-          # Create stub import libraries for delay-loading
-          # These are minimal .lib files that allow linking but defer symbol resolution to runtime
-          Write-Host "Creating stub import libraries for delay-loading..."
+          # Create import libraries from DLL exports for delay-loading
+          Write-Host "Creating import libraries from OBS DLL exports..."
 
-          # Find Visual Studio installation
+          # Find Visual Studio tools
           $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $libExe = Join-Path $vsPath "VC\Tools\MSVC\*\bin\Hostx64\x64\lib.exe" | Get-Item | Select-Object -First 1
+          $vcToolsPath = Join-Path $vsPath "VC\Tools\MSVC" | Get-ChildItem | Select-Object -First 1
+          $libExe = Join-Path $vcToolsPath.FullName "bin\Hostx64\x64\lib.exe"
+          $dumpbinExe = Join-Path $vcToolsPath.FullName "bin\Hostx64\x64\dumpbin.exe"
 
           Write-Host "Using lib.exe at: $libExe"
+          Write-Host "Using dumpbin.exe at: $dumpbinExe"
 
-          # Create minimal .def files
-          @"
-          LIBRARY obs
-          EXPORTS
-          "@  | Out-File -FilePath "obs.def" -Encoding ASCII
+          # Find DLL files in OBS release
+          $obsDll = Get-ChildItem -Path "obs-studio" -Recurse -Filter "obs.dll" | Select-Object -First 1
+          $frontendDll = Get-ChildItem -Path "obs-studio" -Recurse -Filter "obs-frontend-api.dll" | Select-Object -First 1
 
-          @"
-          LIBRARY obs-frontend-api
-          EXPORTS
-          "@ | Out-File -FilePath "obs-frontend-api.def" -Encoding ASCII
+          Write-Host "Found obs.dll at: $($obsDll.FullName)"
+          Write-Host "Found obs-frontend-api.dll at: $($frontendDll.FullName)"
 
-          # Create empty .lib files using lib.exe
+          # Extract exports using dumpbin
+          Write-Host "Extracting exports from obs.dll..."
+          & $dumpbinExe /EXPORTS "$($obsDll.FullName)" > obs-exports.txt
+
+          Write-Host "Extracting exports from obs-frontend-api.dll..."
+          & $dumpbinExe /EXPORTS "$($frontendDll.FullName)" > frontend-exports.txt
+
+          # Parse exports and create .def files
+          Write-Host "Parsing exports and creating .def files..."
+
+          # Parse obs.dll exports
+          $obsExports = Get-Content obs-exports.txt | Select-String -Pattern '^\s+\d+\s+[0-9A-F]+\s+[0-9A-F]+\s+(\w+)' | ForEach-Object {
+              $_.Matches.Groups[1].Value
+          }
+
+          $obsDefContent = @"
+LIBRARY obs
+EXPORTS
+"@
+          foreach ($export in $obsExports) {
+              $obsDefContent += "`n    $export"
+          }
+          Set-Content -Path "obs.def" -Value $obsDefContent -Encoding ASCII
+
+          Write-Host "Created obs.def with $($obsExports.Count) exports"
+
+          # Parse obs-frontend-api.dll exports
+          $frontendExports = Get-Content frontend-exports.txt | Select-String -Pattern '^\s+\d+\s+[0-9A-F]+\s+[0-9A-F]+\s+(\w+)' | ForEach-Object {
+              $_.Matches.Groups[1].Value
+          }
+
+          $frontendDefContent = @"
+LIBRARY obs-frontend-api
+EXPORTS
+"@
+          foreach ($export in $frontendExports) {
+              $frontendDefContent += "`n    $export"
+          }
+          Set-Content -Path "obs-frontend-api.def" -Value $frontendDefContent -Encoding ASCII
+
+          Write-Host "Created obs-frontend-api.def with $($frontendExports.Count) exports"
+
+          # Generate import libraries from .def files
+          Write-Host "Generating import libraries..."
           & $libExe /DEF:obs.def /OUT:"obs-build/lib/obs.lib" /MACHINE:X64
           & $libExe /DEF:obs-frontend-api.def /OUT:"obs-build/lib/obs-frontend-api.lib" /MACHINE:X64
+
+          Write-Host "Import libraries created successfully"
 
           # Generate obsconfig.h from template
           $obsconfigContent = @"
