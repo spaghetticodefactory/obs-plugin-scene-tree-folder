@@ -59,7 +59,7 @@ jobs:
 
           # Download OBS Windows release to get .lib files
           Write-Host "Downloading OBS Windows release for import libraries..."
-          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-studio/releases/download/$obsVersion/OBS-Studio-$obsVersion-Windows.zip" -OutFile "obs-studio.zip"
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-studio/releases/download/$obsVersion/OBS-Studio-$obsVersion-Windows-x64.zip" -OutFile "obs-studio.zip"
           Expand-Archive -Path "obs-studio.zip" -DestinationPath "obs-studio" -Force
 
           # Clone OBS for headers (shallow)
