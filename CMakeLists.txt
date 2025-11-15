@@ -92,11 +92,6 @@ target_link_libraries(${LIBRARY_NAME}
 		PRIVATE
 )
 
-# Windows: Add linker flags to allow unresolved OBS symbols (resolved at runtime by OBS)
-if(WIN32 AND NOT BUILD_IN_OBS)
-	target_link_options(${LIBRARY_NAME} PRIVATE /FORCE:UNRESOLVED)
-endif()
-
 
 ##########################################
 ## Install files
