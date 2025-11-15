@@ -67,7 +67,7 @@ jobs:
 
           # Copy headers
           Copy-Item -Recurse "obs-src/libobs" "obs-build/include/"
-          Copy-Item -Recurse "obs-src/UI/obs-frontend-api" "obs-build/include/"
+          Copy-Item -Recurse "obs-src/frontend/api" "obs-build/include/obs-frontend-api"
 
           # Create a simple config file for CMake to find libobs
           $configContent = @"
