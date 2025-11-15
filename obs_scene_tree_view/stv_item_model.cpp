@@ -14,17 +14,22 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Make folder names bold
+	// Make folder names bold and light gray
 	QFont font = this->font();
 	font.setBold(true);
 	this->setFont(font);
+	this->setForeground(QColor("#a0a0a0")); // Light gray color
 
 	QMainWindow *main_window = reinterpret_cast<QMainWindow*>(obs_frontend_get_main_window());
 	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
-	QIcon icon = config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons") ?
-	            main_window->property("groupIcon").value<QIcon>() :
-	            QIcon();
-	this->setIcon(icon);
+	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons")) {
+		QIcon origIcon = main_window->property("groupIcon").value<QIcon>();
+		// Create a grayed-out version of the icon
+		QPixmap pixmap = origIcon.pixmap(16, 16);
+		QIcon grayIcon;
+		grayIcon.addPixmap(pixmap, QIcon::Disabled);
+		this->setIcon(grayIcon);
+	}
 }
 
 int StvFolderItem::type() const
