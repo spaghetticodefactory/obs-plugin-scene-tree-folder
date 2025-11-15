@@ -176,12 +176,13 @@ jobs:
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
-          mkdir -p package/obs-plugins/64bit
-          mkdir -p package/data/obs-plugins/obs_scene_tree_view
-          copy build_x64\RelWithDebInfo\obs_scene_tree_view.dll package\obs-plugins\64bit\
-          xcopy data\locale package\data\obs-plugins\obs_scene_tree_view\locale\ /E /I
+          # OBS v32 plugin structure: plugin-name/bin/64bit/ and plugin-name/data/
+          mkdir -p package/obs_scene_tree_view/bin/64bit
+          mkdir -p package/obs_scene_tree_view/data
+          copy build_x64\RelWithDebInfo\obs_scene_tree_view.dll package\obs_scene_tree_view\bin\64bit\
+          xcopy data\locale package\obs_scene_tree_view\data\locale\ /E /I
           cd package
-          7z a ..\${{ matrix.name }}-RelWithDebInfo.zip *
+          7z a ..\obs_scene_tree_view-${{ matrix.name }}.zip obs_scene_tree_view
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
