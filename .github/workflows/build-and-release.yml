@@ -53,15 +53,9 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-2025-08-23-x64.zip" -OutFile "deps.zip"
           Expand-Archive -Path "deps.zip" -DestinationPath "obs-deps" -Force
 
-          Write-Host "Contents of obs-deps after first extraction:"
-          Get-ChildItem -Path "obs-deps" -Recurse -Depth 2 | Select-Object FullName
-
           # Download Qt deps
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-qt6-2025-08-23-x64.zip" -OutFile "qt-deps.zip"
           Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps" -Force
-
-          Write-Host "Contents of obs-deps after Qt extraction:"
-          Get-ChildItem -Path "obs-deps" -Recurse -Depth 2 | Select-Object FullName
 
           # Clone OBS for headers (shallow)
           git clone --depth 1 --branch $obsVersion https://github.com/obsproject/obs-studio.git obs-src
@@ -98,6 +92,23 @@ jobs:
 
           Set-Content -Path "obs-build/cmake/libobsConfig.cmake" -Value $configContent
 
+          # Create obs-frontend-api config file
+          $frontendConfigContent = @"
+          # obs-frontend-api config
+          if(NOT TARGET OBS::obs-frontend-api)
+            add_library(OBS::obs-frontend-api INTERFACE IMPORTED)
+            set_target_properties(OBS::obs-frontend-api PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include/obs-frontend-api"
+            )
+          endif()
+
+          # Set package variables
+          set(obs-frontend-api_FOUND TRUE)
+          set(obs-frontend-api_INCLUDE_DIRS "`${CMAKE_CURRENT_LIST_DIR}/../include/obs-frontend-api")
+          "@
+
+          Set-Content -Path "obs-build/cmake/obs-frontend-apiConfig.cmake" -Value $frontendConfigContent
+
           # Set environment for next steps
           echo "OBS_DIR=$pwd/obs-build" >> $env:GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$pwd/obs-build;$pwd/obs-deps" >> $env:GITHUB_ENV
@@ -119,7 +130,7 @@ jobs:
         shell: pwsh
         run: |
           $env:CMAKE_PREFIX_PATH = "$env:CMAKE_PREFIX_PATH;$env:OBS_DIR;$env:Qt6_DIR"
-          cmake --preset windows-x64 -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH" -Dlibobs_DIR="$env:OBS_DIR/cmake"
+          cmake --preset windows-x64 -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH" -Dlibobs_DIR="$env:OBS_DIR/cmake" -Dobs-frontend-api_DIR="$env:OBS_DIR/cmake"
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
