@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           # Download OBS dependencies (dev files)
-          $obsVersion = "30.2.2"
+          $obsVersion = "32.0.2"
 
           # Download dependencies
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-2025-08-23-x64.zip" -OutFile "deps.zip"
