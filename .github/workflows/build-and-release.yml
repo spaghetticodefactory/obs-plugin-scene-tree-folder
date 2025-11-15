@@ -51,11 +51,17 @@ jobs:
 
           # Download dependencies
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-2025-08-23-x64.zip" -OutFile "deps.zip"
-          Expand-Archive -Path "deps.zip" -DestinationPath "obs-deps"
+          Expand-Archive -Path "deps.zip" -DestinationPath "obs-deps" -Force
+
+          Write-Host "Contents of obs-deps after first extraction:"
+          Get-ChildItem -Path "obs-deps" -Recurse -Depth 2 | Select-Object FullName
 
           # Download Qt deps
           Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-qt6-2025-08-23-x64.zip" -OutFile "qt-deps.zip"
-          Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps"
+          Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps" -Force
+
+          Write-Host "Contents of obs-deps after Qt extraction:"
+          Get-ChildItem -Path "obs-deps" -Recurse -Depth 2 | Select-Object FullName
 
           # Clone OBS for headers (shallow)
           git clone --depth 1 --branch $obsVersion https://github.com/obsproject/obs-studio.git obs-src
