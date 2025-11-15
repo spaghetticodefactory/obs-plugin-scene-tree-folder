@@ -72,8 +72,9 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	this->_stv_dock.setupUi(container);
 	setWidget(container);
 
-	// Configure dock widget features
+	// Configure dock widget - hide Qt's title bar since OBS manages dock controls
 	setObjectName("SceneTreeView");
+	setTitleBarWidget(new QWidget()); // Empty widget to hide default title bar
 	setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	setAllowedAreas(Qt::AllDockWidgetAreas);
 
