@@ -91,10 +91,15 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	obs_frontend_add_save_callback(&ObsSceneTreeView::obs_frontend_save_cb, this);
 
 	QObject::connect(this->_stv_dock.stvAdd, &QToolButton::released, this->_add_scene_act, &QAction::trigger);
+	QObject::connect(this->_stv_dock.stvRemove, &QToolButton::released, this, &ObsSceneTreeView::on_stvRemove_released);
+	QObject::connect(this->_stv_dock.stvAddFolder, &QToolButton::clicked, this, &ObsSceneTreeView::on_stvAddFolder_clicked);
 
 	QObject::connect(this->_stv_dock.stvTree->itemDelegate(), &QAbstractItemDelegate::closeEditor,
 	                 this, &ObsSceneTreeView::on_SceneNameEdited);
 	                //main_window, SLOT(SceneNameEdited(QWidget*,QAbstractItemDelegate::EndEditHint)));
+
+	QObject::connect(this->_stv_dock.stvTree, &QTreeView::customContextMenuRequested,
+	                 this, &ObsSceneTreeView::on_stvTree_customContextMenuRequested);
 
 	QObject::connect(this->_toggle_toolbars_scene_act, &QAction::triggered, this, &ObsSceneTreeView::on_toggleListboxToolbars);
 
