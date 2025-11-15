@@ -1,0 +1,8 @@
+{
+  "name": "obs_scene_tree_view",
+  "displayName": "Scene Tree View",
+  "version": "0.2.0",
+  "author": "DigitOtter (forked from obs_scene_tree_view)",
+  "website": "https://github.com/DigitOtter/obs_scene_tree_view",
+  "email": ""
+}
