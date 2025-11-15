@@ -26,9 +26,6 @@ class ObsSceneTreeView
 		void SaveSceneTree(const char *scene_collection);
 		void LoadSceneTree(const char *scene_collection);
 
-	protected:
-		void closeEvent(QCloseEvent *event) override;
-
 	protected slots:
 		void UpdateTreeView();
 
