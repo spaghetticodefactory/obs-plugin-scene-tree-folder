@@ -21,8 +21,9 @@ jobs:
       matrix:
         include:
           - { name: windows-x64, os: windows-2022, arch: x64 }
-          - { name: macos-universal, os: macos-13, arch: universal }
-          - { name: ubuntu-x86_64, os: ubuntu-22.04, arch: x86_64 }
+          # Disabled for now - focus on Windows first
+          # - { name: macos-universal, os: macos-13, arch: universal }
+          # - { name: ubuntu-x86_64, os: ubuntu-22.04, arch: x86_64 }
 
     runs-on: ${{ matrix.os }}
 
@@ -35,22 +36,65 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Environment (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-
       - name: Setup Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.7.0'
-          arch: ${{ runner.os == 'Windows' && 'win64_msvc2019_64' || '' }}
+          arch: 'win64_msvc2019_64'
 
-      - name: Download OBS Dependencies (Windows)
+      - name: Download OBS Development Files
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          curl -L -o obs-studio.zip https://github.com/obsproject/obs-studio/releases/download/30.2.2/OBS-Studio-30.2.2-Windows.zip
-          7z x obs-studio.zip -oobs-studio
+          # Download OBS dependencies (dev files)
+          $obsVersion = "30.2.2"
+
+          # Download dependencies
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2024-06-08/windows-deps-2024-06-08-x64.zip" -OutFile "deps.zip"
+          Expand-Archive -Path "deps.zip" -DestinationPath "obs-deps"
+
+          # Download Qt deps
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2024-06-08/windows-deps-qt6-2024-06-08-x64.zip" -OutFile "qt-deps.zip"
+          Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps"
+
+          # Clone OBS for headers (shallow)
+          git clone --depth 1 --branch $obsVersion https://github.com/obsproject/obs-studio.git obs-src
+
+          # Create a minimal libobs install structure
+          New-Item -ItemType Directory -Force -Path "obs-build/cmake"
+          New-Item -ItemType Directory -Force -Path "obs-build/include"
+          New-Item -ItemType Directory -Force -Path "obs-build/bin/64bit"
+
+          # Copy headers
+          Copy-Item -Recurse "obs-src/libobs" "obs-build/include/"
+          Copy-Item -Recurse "obs-src/UI/obs-frontend-api" "obs-build/include/"
+
+          # Create a simple config file for CMake to find libobs
+          $configContent = @"
+          # Dummy libobs config
+          set(OBS_INCLUDE_DIRS "`${CMAKE_CURRENT_LIST_DIR}/../include")
+          set(OBS_LIBRARIES "")
+
+          if(NOT TARGET OBS::libobs)
+            add_library(OBS::libobs INTERFACE IMPORTED)
+            set_target_properties(OBS::libobs PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include"
+            )
+          endif()
+
+          if(NOT TARGET OBS::obs-frontend-api)
+            add_library(OBS::obs-frontend-api INTERFACE IMPORTED)
+            set_target_properties(OBS::obs-frontend-api PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include/obs-frontend-api"
+            )
+          endif()
+          "@
+
+          Set-Content -Path "obs-build/cmake/libobsConfig.cmake" -Value $configContent
+
+          # Set environment for next steps
+          echo "OBS_DIR=$pwd/obs-build" >> $env:GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$pwd/obs-build;$pwd/obs-deps" >> $env:GITHUB_ENV
 
       - name: Install OBS Dependencies (macOS)
         if: runner.os == 'macOS'
@@ -66,8 +110,10 @@ jobs:
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          cmake --preset windows-x64
+          $env:CMAKE_PREFIX_PATH = "$env:CMAKE_PREFIX_PATH;$env:OBS_DIR;$env:Qt6_DIR"
+          cmake --preset windows-x64 -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH" -Dlibobs_DIR="$env:OBS_DIR/cmake"
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
