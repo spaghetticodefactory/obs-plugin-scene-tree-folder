@@ -85,14 +85,18 @@ jobs:
 
           # Create a simple config file for CMake to find libobs
           $configContent = @"
-          # Dummy libobs config
+          # libobs config
           set(OBS_INCLUDE_DIRS "`${CMAKE_CURRENT_LIST_DIR}/../include/libobs")
-          set(OBS_LIBRARIES "")
+
+          # Find library files in obs-deps
+          set(OBS_DEPS_DIR "`${CMAKE_CURRENT_LIST_DIR}/../../obs-deps")
 
           if(NOT TARGET OBS::libobs)
             add_library(OBS::libobs INTERFACE IMPORTED)
             set_target_properties(OBS::libobs PROPERTIES
               INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include/libobs"
+              INTERFACE_LINK_DIRECTORIES "`${OBS_DEPS_DIR}/lib"
+              INTERFACE_LINK_LIBRARIES "obs;jansson"
             )
           endif()
 
@@ -100,6 +104,8 @@ jobs:
             add_library(OBS::obs-frontend-api INTERFACE IMPORTED)
             set_target_properties(OBS::obs-frontend-api PROPERTIES
               INTERFACE_INCLUDE_DIRECTORIES "`${CMAKE_CURRENT_LIST_DIR}/../include/obs-frontend-api"
+              INTERFACE_LINK_DIRECTORIES "`${OBS_DEPS_DIR}/lib"
+              INTERFACE_LINK_LIBRARIES "obs-frontend-api"
             )
           endif()
           "@
