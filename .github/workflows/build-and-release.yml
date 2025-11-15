@@ -50,11 +50,11 @@ jobs:
           $obsVersion = "30.2.2"
 
           # Download dependencies
-          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2024-06-08/windows-deps-2024-06-08-x64.zip" -OutFile "deps.zip"
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-2025-08-23-x64.zip" -OutFile "deps.zip"
           Expand-Archive -Path "deps.zip" -DestinationPath "obs-deps"
 
           # Download Qt deps
-          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2024-06-08/windows-deps-qt6-2024-06-08-x64.zip" -OutFile "qt-deps.zip"
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-deps/releases/download/2025-08-23/windows-deps-qt6-2025-08-23-x64.zip" -OutFile "qt-deps.zip"
           Expand-Archive -Path "qt-deps.zip" -DestinationPath "obs-deps"
 
           # Clone OBS for headers (shallow)
