@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>STVDock</class>
- <widget class="QDockWidget" name="STVDock">
+ <widget class="QWidget" name="STVDock">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -10,17 +10,7 @@
     <height>263</height>
    </rect>
   </property>
-  <property name="styleSheet">
-   <string notr="true">show-decoration-selected: 1</string>
-  </property>
-  <property name="floating">
-   <bool>true</bool>
-  </property>
-  <property name="windowTitle">
-   <string>SceneTreeView.Title</string>
-  </property>
-  <widget class="QWidget" name="stvContents">
-   <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout">
     <property name="leftMargin">
      <number>0</number>
     </property>

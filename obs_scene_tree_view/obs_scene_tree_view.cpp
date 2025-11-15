@@ -67,11 +67,14 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	assert(this->_add_scene_act);
 	assert(this->_remove_scene_act);
 
-	this->_stv_dock.setupUi(this);
+	// Create container widget for dock content
+	QWidget *container = new QWidget(this);
+	this->_stv_dock.setupUi(container);
+	setWidget(container);
 
 	// Configure dock widget features
 	setObjectName("SceneTreeView");
-	setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetClosable);
+	setFeatures(QDockWidget::AllDockWidgetFeatures);
 	setAllowedAreas(Qt::AllDockWidgetAreas);
 
 	this->_stv_dock.stvTree->SetItemModel(&this->_scene_tree_items);
