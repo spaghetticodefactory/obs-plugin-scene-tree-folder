@@ -69,6 +69,20 @@ jobs:
           Copy-Item -Recurse "obs-src/libobs" "obs-build/include/"
           Copy-Item -Recurse "obs-src/frontend/api" "obs-build/include/obs-frontend-api"
 
+          # Generate obsconfig.h from template
+          $obsconfigContent = @"
+          #pragma once
+
+          #define OBS_DATA_PATH ""
+          #define OBS_PLUGIN_PATH ""
+          #define OBS_PLUGIN_DESTINATION ""
+
+          #define OBS_RELEASE_CANDIDATE 0
+          #define OBS_BETA 0
+          "@
+
+          Set-Content -Path "obs-build/include/libobs/obsconfig.h" -Value $obsconfigContent
+
           # Create a simple config file for CMake to find libobs
           $configContent = @"
           # Dummy libobs config
