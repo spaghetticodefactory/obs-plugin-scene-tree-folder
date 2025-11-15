@@ -1,52 +1,161 @@
-name: Build and Release Plugin
+name: Build and Release
 
 on:
   push:
     tags:
       - "v*"
     branches:
-      - master
       - main
+      - master
   pull_request:
     branches:
-      - master
       - main
+      - master
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build:
-    name: Build Plugin
-    uses: obsproject/obs-plugintemplate/.github/workflows/build-project.yaml@master
-    secrets: inherit
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-2022, arch: x64 }
+          - { name: macos-universal, os: macos-13, arch: universal }
+          - { name: ubuntu-x86_64, os: ubuntu-22.04, arch: x86_64 }
+
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Environment (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+      - name: Setup Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          arch: ${{ runner.os == 'Windows' && 'win64_msvc2019_64' || '' }}
+
+      - name: Download OBS Dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl -L -o obs-studio.zip https://github.com/obsproject/obs-studio/releases/download/30.2.2/OBS-Studio-30.2.2-Windows.zip
+          7z x obs-studio.zip -oobs-studio
+
+      - name: Install OBS Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install obs
+
+      - name: Install OBS Dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo add-apt-repository ppa:obsproject/obs-studio
+          sudo apt-get update
+          sudo apt-get install -y obs-studio libobs-dev
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake --preset windows-x64
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake --preset macos
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake --preset ubuntu-x86_64
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake --build --preset windows-x64 --config RelWithDebInfo
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake --build --preset macos --config RelWithDebInfo
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake --build --preset ubuntu-x86_64
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p package/obs-plugins/64bit
+          mkdir -p package/data/obs-plugins/obs_scene_tree_view
+          copy build_x64\RelWithDebInfo\obs_scene_tree_view.dll package\obs-plugins\64bit\
+          xcopy data\locale package\data\obs-plugins\obs_scene_tree_view\locale\ /E /I
+          cd package
+          7z a ..\${{ matrix.name }}-RelWithDebInfo.zip *
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p package/obs-plugins
+          mkdir -p package/data/obs-plugins/obs_scene_tree_view
+          cp -r build_macos/RelWithDebInfo/obs_scene_tree_view.so package/obs-plugins/
+          cp -r data/locale package/data/obs-plugins/obs_scene_tree_view/
+          cd package
+          tar -czf ../${{ matrix.name }}-RelWithDebInfo.tar.gz *
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p package/lib/obs-plugins
+          mkdir -p package/share/obs/obs-plugins/obs_scene_tree_view
+          cp build_x86_64/libobs_scene_tree_view.so package/lib/obs-plugins/
+          cp -r data/locale package/share/obs/obs-plugins/obs_scene_tree_view/
+          cd package
+          tar -czf ../${{ matrix.name }}-RelWithDebInfo.tar.gz *
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-RelWithDebInfo
+          path: |
+            *.zip
+            *.tar.gz
 
   release:
-    name: Create Release
+    name: Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [build]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
     steps:
-      - name: Download all artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: artifacts
 
-      - name: Prepare release assets
+      - name: Prepare Release
         run: |
-          mkdir -p release
-          find artifacts -type f \( -name "*.zip" -o -name "*.tar.xz" \) -exec cp {} release/ \;
+          mkdir release
+          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release/ \;
           ls -la release
 
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/*.zip
-            release/*.tar.xz
+          files: release/*
           generate_release_notes: true
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
