@@ -15,16 +15,17 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Make folder names bold (use default text color unless custom color is set)
-	QFont font = this->font();
-	font.setBold(true);
-	this->setFont(font);
+	// Make folder names bold - set only font weight to preserve size and family
+	// This ensures we inherit the tree view's font size and only change weight
+	QFont font;
+	font.setWeight(QFont::Bold);
+	this->setData(font, Qt::FontRole);
 
-	// Set Unicode folder icon (closed folder by default)
+	// Set simple folder icon (collapsed by default)
 	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
 	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
 	{
-		QString folderIcon = "📁"; // Closed folder emoji
+		QString folderIcon = "▸"; // Right-pointing triangle for collapsed folder
 		QColor iconColor(160, 160, 160); // Light gray
 		this->setIcon(StvItemModel::CreateTextIcon(folderIcon, iconColor));
 	}
@@ -46,6 +47,9 @@ StvSceneItem::StvSceneItem(const QString &text, obs_weak_source_t *weak)
 	            main_window->property("sceneIcon").value<QIcon>() :
 	            QIcon();
 	this->setIcon(icon);
+
+	// Explicitly reset foreground to default color (no gray inheritance)
+	this->setForeground(QBrush());
 
 	// Note: Color inheritance is applied when the item is added to a parent
 	// See UpdateChildColors() which is called after adding items to folders
@@ -476,8 +480,8 @@ void StvItemModel::SetFolderIcon(QStandardItem *folder_item, bool isExpanded)
 	if (!config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
 		return;
 
-	// Use different Unicode folder icons based on expanded state
-	QString folderIcon = isExpanded ? "📂" : "📁"; // Open folder : Closed folder
+	// Use simple triangle icons based on expanded state
+	QString folderIcon = isExpanded ? "▾" : "▸"; // Down triangle : Right triangle
 	QColor iconColor(160, 160, 160); // Light gray
 	folder_item->setIcon(CreateTextIcon(folderIcon, iconColor));
 }

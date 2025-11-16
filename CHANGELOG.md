@@ -2,6 +2,23 @@
 
 All notable changes to OBS Scene Organizer will be documented in this file.
 
+## [0.21.1] - 2025-11-16
+
+### Changed
+- Replaced colorful Unicode folder emojis with simple grayscale triangle symbols (▸/▾)
+- Folder icons are now less distracting and render consistently across all platforms
+
+### Fixed
+- Fixed root-level scenes displaying dark gray color instead of default white
+- Scenes now correctly inherit color only from parent folders with custom colors
+- Fixed font size inconsistency with OBS native docks (Scene, Source docks)
+- Folder bold font now only changes weight, preserving size and family from tree view
+
+### Documentation
+- Restructured README with credits section moved to end
+- Added brief "successor" mention at the top
+- Updated visual indicators description
+
 ## [0.21.0] - 2025-11-16
 
 ### Changed

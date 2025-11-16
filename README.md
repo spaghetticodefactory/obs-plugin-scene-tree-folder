@@ -4,19 +4,9 @@
 
 A powerful scene management plugin for OBS Studio that lets you organize scenes into folders with custom colors and visual hierarchy.
 
+*Successor to the original obs_scene_tree_view by [DigitOtter](https://github.com/DigitOtter/obs_scene_tree_view).*
+
 **Compatible with OBS Studio 32.0+**
-
----
-
-> **Credits**: This plugin is based on the [original obs_scene_tree_view by DigitOtter](https://github.com/DigitOtter/obs_scene_tree_view).
->
-> This fork adds enhanced organizational features including:
-> - Custom folder colors with inheritance
-> - Visual folder icons with expand/collapse states
-> - Full Qt6 modernization and OBS v32 API compatibility
-> - Automated cross-platform builds
->
-> All credit for the original scene tree concept goes to DigitOtter.
 
 ---
 
@@ -36,9 +26,9 @@ A powerful scene management plugin for OBS Studio that lets you organize scenes 
 - Colors persist across OBS sessions
 
 ### 🔖 Visual Indicators
-- Unicode folder icons (📁 closed, 📂 open) that change dynamically
+- Simple folder icons (▸ collapsed, ▾ expanded) that change dynamically
 - Bold folder names for easy identification
-- Light gray default styling for better visibility in both light and dark themes
+- Light gray folder icons for subtle, non-distracting visual cues
 
 ### ⚡ Seamless Integration
 - Works alongside OBS's native Scenes dock
@@ -147,6 +137,19 @@ cmake --build .
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
+
+## Credits
+
+This plugin is based on the [original obs_scene_tree_view by DigitOtter](https://github.com/DigitOtter/obs_scene_tree_view).
+
+**Enhancements in this version:**
+- Custom folder colors with inheritance to child scenes
+- Visual folder icons with expand/collapse states
+- Full Qt6 modernization and OBS v32 API compatibility
+- Automated cross-platform builds via GitHub Actions
+- Improved documentation and multi-language support
+
+All credit for the original scene tree concept and foundational work goes to DigitOtter.
 
 ## Contributing
 
