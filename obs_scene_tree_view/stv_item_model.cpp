@@ -15,8 +15,10 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Make folder names bold using font weight role only (preserves size)
-	this->setData(QFont::Weight::Bold, Qt::FontWeightRole);
+	// Make folder names bold - create font with only weight set
+	QFont boldFont;
+	boldFont.setBold(true);
+	this->setData(boldFont, Qt::FontRole);
 }
 
 int StvFolderItem::type() const
