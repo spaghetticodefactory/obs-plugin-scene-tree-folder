@@ -256,14 +256,14 @@ jobs:
           echo "PLUGIN_VERSION=$version" >> $env:GITHUB_ENV
 
           # OBS v32 plugin structure: plugin-name/bin/64bit/ and plugin-name/data/
-          mkdir -p package/obs_scene_tree_view/bin/64bit
-          mkdir -p package/obs_scene_tree_view/data
-          copy build_x64\RelWithDebInfo\obs_scene_tree_view.dll package\obs_scene_tree_view\bin\64bit\
-          xcopy data\locale package\obs_scene_tree_view\data\locale\ /E /I
+          mkdir -p package/obs-scene-organizer/bin/64bit
+          mkdir -p package/obs-scene-organizer/data
+          copy build_x64\RelWithDebInfo\obs-scene-organizer.dll package\obs-scene-organizer\bin\64bit\
+          xcopy data\locale package\obs-scene-organizer\data\locale\ /E /I
 
           # Create release package with version and architecture
           cd package
-          7z a "..\obs_scene_tree_view-v$version-${{ matrix.name }}.zip" obs_scene_tree_view
+          7z a "..\obs-scene-organizer-v$version-${{ matrix.name }}.zip" obs-scene-organizer
 
           # Clean up downloaded dependencies to keep artifacts small
           cd ..
@@ -277,9 +277,9 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           mkdir -p package/obs-plugins
-          mkdir -p package/data/obs-plugins/obs_scene_tree_view
-          cp -r build_macos/RelWithDebInfo/obs_scene_tree_view.so package/obs-plugins/
-          cp -r data/locale package/data/obs-plugins/obs_scene_tree_view/
+          mkdir -p package/data/obs-plugins/obs-scene-organizer
+          cp -r build_macos/RelWithDebInfo/obs-scene-organizer.so package/obs-plugins/
+          cp -r data/locale package/data/obs-plugins/obs-scene-organizer/
           cd package
           tar -czf ../${{ matrix.name }}-RelWithDebInfo.tar.gz *
 
@@ -287,17 +287,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir -p package/lib/obs-plugins
-          mkdir -p package/share/obs/obs-plugins/obs_scene_tree_view
-          cp build_x86_64/libobs_scene_tree_view.so package/lib/obs-plugins/
-          cp -r data/locale package/share/obs/obs-plugins/obs_scene_tree_view/
+          mkdir -p package/share/obs/obs-plugins/obs-scene-organizer
+          cp build_x86_64/libobs-scene-organizer.so package/lib/obs-plugins/
+          cp -r data/locale package/share/obs/obs-plugins/obs-scene-organizer/
           cd package
           tar -czf ../${{ matrix.name }}-RelWithDebInfo.tar.gz *
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: obs_scene_tree_view-v${{ env.PLUGIN_VERSION }}-${{ matrix.name }}
-          path: obs_scene_tree_view-v*.zip
+          name: obs-scene-organizer-v${{ env.PLUGIN_VERSION }}-${{ matrix.name }}
+          path: obs-scene-organizer-v*.zip
 
   release:
     name: Release
