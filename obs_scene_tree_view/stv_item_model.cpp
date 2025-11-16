@@ -15,20 +15,8 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Make folder names bold - set only font weight to preserve size and family
-	// This ensures we inherit the tree view's font size and only change weight
-	QFont font;
-	font.setWeight(QFont::Bold);
-	this->setData(font, Qt::FontRole);
-
-	// Set simple folder icon (collapsed by default)
-	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
-	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
-	{
-		QString folderIcon = "▸"; // Right-pointing triangle for collapsed folder
-		QColor iconColor(160, 160, 160); // Light gray
-		this->setIcon(StvItemModel::CreateTextIcon(folderIcon, iconColor));
-	}
+	// Tree view provides expand/collapse arrows - folders distinguished by hierarchy
+	// Bold font will be applied via StyleSheet if needed to avoid font size inconsistencies
 }
 
 int StvFolderItem::type() const
@@ -48,11 +36,8 @@ StvSceneItem::StvSceneItem(const QString &text, obs_weak_source_t *weak)
 	            QIcon();
 	this->setIcon(icon);
 
-	// Explicitly reset foreground to default color (no gray inheritance)
-	this->setForeground(QBrush());
-
-	// Note: Color inheritance is applied when the item is added to a parent
-	// See UpdateChildColors() which is called after adding items to folders
+	// Don't set any foreground - let Qt use default text color from tree view
+	// Color inheritance is applied in UpdateChildColors() after items are added to folders
 }
 
 int StvSceneItem::type() const
@@ -439,7 +424,7 @@ void StvItemModel::UpdateChildColors(QStandardItem *parent_item)
 			if (hasCustomColor)
 				child->setForeground(QBrush(folderColor));
 			else
-				child->setForeground(QBrush()); // Reset to default text color
+				child->setData(QVariant(), Qt::ForegroundRole); // Clear foreground to use default
 		}
 		else if (child->type() == FOLDER)
 		{

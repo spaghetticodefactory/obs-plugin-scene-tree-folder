@@ -101,19 +101,6 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	QObject::connect(this->_stv_dock.stvTree, &QTreeView::customContextMenuRequested,
 	                 this, &ObsSceneTreeView::on_stvTree_customContextMenuRequested);
 
-	// Connect expand/collapse signals to update folder icons
-	QObject::connect(this->_stv_dock.stvTree, &QTreeView::expanded, [this](const QModelIndex &index) {
-		QStandardItem *item = this->_scene_tree_items.itemFromIndex(index);
-		if (item && item->type() == StvItemModel::FOLDER)
-			this->_scene_tree_items.SetFolderIcon(item, true); // Expanded = open folder icon
-	});
-
-	QObject::connect(this->_stv_dock.stvTree, &QTreeView::collapsed, [this](const QModelIndex &index) {
-		QStandardItem *item = this->_scene_tree_items.itemFromIndex(index);
-		if (item && item->type() == StvItemModel::FOLDER)
-			this->_scene_tree_items.SetFolderIcon(item, false); // Collapsed = closed folder icon
-	});
-
 	QObject::connect(this->_toggle_toolbars_scene_act, &QAction::triggered, this, &ObsSceneTreeView::on_toggleListboxToolbars);
 
 	this->_stv_dock.stvTree->setModel(&(this->_scene_tree_items));

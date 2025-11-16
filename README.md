@@ -25,10 +25,10 @@ A powerful scene management plugin for OBS Studio that lets you organize scenes 
 - Remove colors to return to default appearance
 - Colors persist across OBS sessions
 
-### 🔖 Visual Indicators
-- Simple folder icons (▸ collapsed, ▾ expanded) that change dynamically
-- Bold folder names for easy identification
-- Light gray folder icons for subtle, non-distracting visual cues
+### 🔖 Visual Hierarchy
+- Tree view provides native expand/collapse arrows
+- Folders distinguished by indentation and hierarchy
+- Clean, consistent font matching OBS native docks
 
 ### ⚡ Seamless Integration
 - Works alongside OBS's native Scenes dock
@@ -144,7 +144,7 @@ This plugin is based on the [original obs_scene_tree_view by DigitOtter](https:/
 
 **Enhancements in this version:**
 - Custom folder colors with inheritance to child scenes
-- Visual folder icons with expand/collapse states
+- Consistent font rendering matching OBS native docks
 - Full Qt6 modernization and OBS v32 API compatibility
 - Automated cross-platform builds via GitHub Actions
 - Improved documentation and multi-language support
