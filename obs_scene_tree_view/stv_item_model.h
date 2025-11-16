@@ -89,6 +89,9 @@ class StvItemModel
 
 		void SetFolderColor(QStandardItem *folder_item, const QColor &color);
 		void UpdateChildColors(QStandardItem *parent_item);
+		void SetFolderIcon(QStandardItem *folder_item, bool isExpanded);
+
+		static QIcon CreateTextIcon(const QString &text, const QColor &color = QColor(160, 160, 160));
 
 		void UpdateSceneSize();
 		bool IsManagedScene(obs_scene_t *scene) const;

@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QMimeData>
+#include <QPainter>
 #include <QRegularExpression>
 #include <QtWidgets/QMainWindow>
 
@@ -14,21 +15,18 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Make folder names bold and light gray
+	// Make folder names bold (use default text color unless custom color is set)
 	QFont font = this->font();
 	font.setBold(true);
 	this->setFont(font);
-	this->setForeground(QColor("#a0a0a0")); // Light gray color
 
-	QMainWindow *main_window = reinterpret_cast<QMainWindow*>(obs_frontend_get_main_window());
+	// Set Unicode folder icon (closed folder by default)
 	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
-	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons")) {
-		QIcon origIcon = main_window->property("groupIcon").value<QIcon>();
-		// Create a grayed-out version of the icon
-		QPixmap pixmap = origIcon.pixmap(16, 16);
-		QIcon grayIcon;
-		grayIcon.addPixmap(pixmap, QIcon::Disabled);
-		this->setIcon(grayIcon);
+	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
+	{
+		QString folderIcon = "📁"; // Closed folder emoji
+		QColor iconColor(160, 160, 160); // Light gray
+		this->setIcon(StvItemModel::CreateTextIcon(folderIcon, iconColor));
 	}
 }
 
@@ -403,7 +401,7 @@ void StvItemModel::SetFolderColor(QStandardItem *folder_item, const QColor &colo
 	if (color.isValid())
 		folder_item->setForeground(QBrush(color));
 	else
-		folder_item->setForeground(QColor("#a0a0a0")); // Default light gray
+		folder_item->setForeground(QBrush()); // Reset to default text color
 
 	// Update all child scenes to inherit this color
 	UpdateChildColors(folder_item);
@@ -415,13 +413,16 @@ void StvItemModel::UpdateChildColors(QStandardItem *parent_item)
 		return;
 
 	QColor folderColor;
+	bool hasCustomColor = false;
+
 	if (parent_item->type() == FOLDER)
 	{
 		QVariant colorData = parent_item->data(FOLDER_COLOR);
 		if (colorData.isValid())
+		{
 			folderColor = colorData.value<QColor>();
-		else
-			folderColor = QColor("#a0a0a0"); // Default folder color
+			hasCustomColor = folderColor.isValid();
+		}
 	}
 
 	// Apply color to all children
@@ -430,9 +431,11 @@ void StvItemModel::UpdateChildColors(QStandardItem *parent_item)
 		QStandardItem *child = parent_item->child(i);
 		if (child->type() == SCENE)
 		{
-			// Scenes inherit parent folder color
-			if (folderColor.isValid())
+			// Scenes inherit parent folder color only if folder has custom color
+			if (hasCustomColor)
 				child->setForeground(QBrush(folderColor));
+			else
+				child->setForeground(QBrush()); // Reset to default text color
 		}
 		else if (child->type() == FOLDER)
 		{
@@ -440,6 +443,43 @@ void StvItemModel::UpdateChildColors(QStandardItem *parent_item)
 			UpdateChildColors(child);
 		}
 	}
+}
+
+QIcon StvItemModel::CreateTextIcon(const QString &text, const QColor &color)
+{
+	// Create a pixmap with the Unicode character
+	QFont font;
+	font.setPointSize(14);
+	font.setFamily("Segoe UI Emoji"); // Use emoji font
+
+	QFontMetrics fm(font);
+	int width = fm.horizontalAdvance(text) + 4;
+	int height = fm.height();
+
+	QPixmap pixmap(width, height);
+	pixmap.fill(Qt::transparent);
+
+	QPainter painter(&pixmap);
+	painter.setFont(font);
+	painter.setPen(color);
+	painter.drawText(pixmap.rect(), Qt::AlignCenter, text);
+
+	return QIcon(pixmap);
+}
+
+void StvItemModel::SetFolderIcon(QStandardItem *folder_item, bool isExpanded)
+{
+	if (!folder_item || folder_item->type() != FOLDER)
+		return;
+
+	// OBS v32: Use obs_frontend_get_user_config() instead of deprecated obs_frontend_get_global_config()
+	if (!config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
+		return;
+
+	// Use different Unicode folder icons based on expanded state
+	QString folderIcon = isExpanded ? "📂" : "📁"; // Open folder : Closed folder
+	QColor iconColor(160, 160, 160); // Light gray
+	folder_item->setIcon(CreateTextIcon(folderIcon, iconColor));
 }
 
 void StvItemModel::UpdateSceneSize()
@@ -524,6 +564,15 @@ obs_data_array_t *StvItemModel::CreateFolderArray(QStandardItem &folder, QTreeVi
 			obs_data_set_array(item_data, SCENE_TREE_CONFIG_FOLDER_DATA.data(), sub_folder_data);
 			obs_data_set_bool(item_data, SCENE_TREE_CONFIG_FOLDER_EXPANDED.data(), view->isExpanded(item->index()));
 			obs_data_set_string(item_data, SCENE_TREE_CONFIG_ITEM_NAME_DATA.data(), item->text().toStdString().c_str());
+
+			// Save folder color
+			QVariant colorData = item->data(FOLDER_COLOR);
+			if (colorData.isValid())
+			{
+				QColor color = colorData.value<QColor>();
+				if (color.isValid())
+					obs_data_set_string(item_data, "folder_color", color.name().toStdString().c_str());
+			}
 		}
 		else
 		{
@@ -578,6 +627,15 @@ void StvItemModel::LoadFolderArray(obs_data_array_t *folder_data, QStandardItem 
 		{
 			StvFolderItem *new_folder_item = new StvFolderItem(item_name);
 			this->LoadFolderArray(folder_data, *new_folder_item, expandable_folders);
+
+			// Load folder color
+			const char *colorStr = obs_data_get_string(item_data, "folder_color");
+			if (colorStr && colorStr[0] != '\0')
+			{
+				QColor color(colorStr);
+				if (color.isValid())
+					this->SetFolderColor(new_folder_item, color);
+			}
 
 			folder.appendRow(new_folder_item);
 
