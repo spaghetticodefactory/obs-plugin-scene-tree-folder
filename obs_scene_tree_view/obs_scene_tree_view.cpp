@@ -104,6 +104,12 @@ ObsSceneTreeView::ObsSceneTreeView(QMainWindow *main_window)
 	QObject::connect(this->_toggle_toolbars_scene_act, &QAction::triggered, this, &ObsSceneTreeView::on_toggleListboxToolbars);
 
 	this->_stv_dock.stvTree->setModel(&(this->_scene_tree_items));
+
+	// Match font size with OBS native scene list
+	QListWidget *scenes_list = main_window->findChild<QListWidget*>("scenes");
+	if (scenes_list) {
+		this->_stv_dock.stvTree->setFont(scenes_list->font());
+	}
 }
 
 ObsSceneTreeView::~ObsSceneTreeView()

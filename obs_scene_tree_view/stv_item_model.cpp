@@ -15,8 +15,8 @@ StvFolderItem::StvFolderItem(const QString &text)
 {
 	this->setDropEnabled(true);
 
-	// Tree view provides expand/collapse arrows - folders distinguished by hierarchy
-	// Bold font will be applied via StyleSheet if needed to avoid font size inconsistencies
+	// Make folder names bold using font weight role only (preserves size)
+	this->setData(QFont::Weight::Bold, Qt::FontWeightRole);
 }
 
 int StvFolderItem::type() const
