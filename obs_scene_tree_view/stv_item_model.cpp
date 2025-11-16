@@ -19,6 +19,14 @@ StvFolderItem::StvFolderItem(const QString &text)
 	QFont boldFont;
 	boldFont.setBold(true);
 	this->setData(boldFont, Qt::FontRole);
+
+	// Set OBS folder icon if enabled
+	QMainWindow *main_window = reinterpret_cast<QMainWindow*>(obs_frontend_get_main_window());
+	if (config_get_bool(obs_frontend_get_user_config(), "SceneTreeView", "ShowFolderIcons"))
+	{
+		QIcon icon = main_window->property("groupIcon").value<QIcon>();
+		this->setIcon(icon);
+	}
 }
 
 int StvFolderItem::type() const
