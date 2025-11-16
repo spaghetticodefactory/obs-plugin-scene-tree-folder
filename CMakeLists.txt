@@ -1,4 +1,4 @@
-set(PROJECT_NAME "obs_scene_tree_view")
+set(PROJECT_NAME "obs-scene-organizer")
 set(HEADER_DIRECTORY "obs_scene_tree_view")
 
 set(NAMESPACE_NAME "${PROJECT_NAME}")
@@ -12,7 +12,7 @@ set(LIB_CONFIG_NAME "${LIBRARY_NAME}Config")
 set(LIB_VERSION_NAME "${LIB_CONFIG_NAME}Version")
 
 cmake_minimum_required(VERSION 3.20)
-project("${PROJECT_NAME}" VERSION 0.20.1)
+project("${PROJECT_NAME}" VERSION 0.21.0)
 
 if(NOT DEFINED BUILD_IN_OBS)
 		set(BUILD_IN_OBS OFF)

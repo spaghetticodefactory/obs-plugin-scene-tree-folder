@@ -43,6 +43,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Documentation - exclude all .md files EXCEPT README.md
+# Documentation - exclude all .md files EXCEPT README.md and CHANGELOG.md
 *.md
 !README.md
+!CHANGELOG.md
